@@ -154,6 +154,14 @@
       text-transform: uppercase;
       font-size: clamp(0.8rem, 1.4vw, 1.05rem);
       color: var(--muted);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 1.8s ease, transform 1.8s ease;
+    }
+
+    .line.visible {
+      opacity: 1;
+      transform: translateY(0);
     }
 
     .line::before,
@@ -298,10 +306,12 @@
   <script>
     const RECIPIENT_NAME = 'Favor';
     const dedicationText = '“Lovely” — Billie Ellish';
+    const DEDICATION_DELAY_MS = 180000;
     const videoA = document.getElementById('bgVideoA');
     const videoB = document.getElementById('bgVideoB');
     const videos = [videoA, videoB];
     const hint = document.querySelector('.hint');
+    const dedicationEl = document.getElementById('dedication');
     const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     const CROSSFADE_SECONDS = 2.4;
     const VIDEO_MAX_OPACITY = 0.62;
@@ -310,9 +320,24 @@
     let monitorHandle = null;
     let crossfadeRunning = false;
     let playbackStarted = false;
+    let dedicationTimer = null;
+    let dedicationShown = false;
 
     document.getElementById('recipientName').textContent = RECIPIENT_NAME;
-    document.getElementById('dedication').textContent = dedicationText;
+    dedicationEl.textContent = dedicationText;
+
+    function revealDedication() {
+      dedicationShown = true;
+      dedicationEl.classList.add('visible');
+    }
+
+    function resetDedicationTimer() {
+      if (dedicationTimer) {
+        clearTimeout(dedicationTimer);
+      }
+      if (dedicationShown) return;
+      dedicationTimer = window.setTimeout(revealDedication, DEDICATION_DELAY_MS);
+    }
 
     function setLayerOpacity(videoEl, alpha) {
       videoEl.style.setProperty('--video-opacity', String(VIDEO_MAX_OPACITY * alpha));
@@ -405,6 +430,7 @@
       try {
         await activeVideo.play();
         playbackStarted = true;
+        resetDedicationTimer();
         stopLoopMonitor();
         monitorLoop();
         hint.classList.remove('needs-start');
