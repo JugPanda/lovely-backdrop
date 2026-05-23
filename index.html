@@ -38,6 +38,8 @@
         linear-gradient(180deg, #0c0d18 0%, #090a14 44%, #0a0b16 100%);
     }
 
+    .video-wrap,
+    .bg-video,
     canvas,
     .mist,
     .vignette,
@@ -47,12 +49,29 @@
       inset: 0;
     }
 
+    .video-wrap {
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 18%, rgba(255, 244, 225, 0.06), transparent 32%),
+        linear-gradient(180deg, rgba(7, 8, 14, 0.16), rgba(7, 8, 14, 0.42) 58%, rgba(5, 6, 12, 0.72));
+    }
+
+    .bg-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scale(1.1);
+      filter: blur(14px) saturate(0.42) brightness(0.42) contrast(0.94) sepia(0.08) hue-rotate(202deg);
+      opacity: 0.34;
+      mix-blend-mode: screen;
+    }
+
     #lights {
       width: 100%;
       height: 100%;
       display: block;
       filter: blur(0.2px);
-      opacity: 0.96;
+      opacity: 0.68;
     }
 
     .mist {
@@ -62,13 +81,13 @@
         radial-gradient(42vw 32vw at 54% 18%, rgba(180, 137, 156, 0.08), transparent 72%);
       mix-blend-mode: screen;
       filter: blur(42px);
-      opacity: 0.72;
+      opacity: 0.58;
       animation: breathe 18s ease-in-out infinite alternate;
       transform-origin: center;
     }
 
     .grain {
-      opacity: 0.06;
+      opacity: 0.045;
       background-image:
         linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
@@ -79,8 +98,20 @@
 
     .vignette {
       background:
-        radial-gradient(circle at center, transparent 0 38%, rgba(8, 8, 18, 0.18) 62%, var(--vignette) 100%),
-        linear-gradient(180deg, rgba(7, 7, 15, 0.3), rgba(7, 7, 15, 0.18) 32%, rgba(7, 7, 15, 0.34));
+        radial-gradient(circle at center, transparent 0 34%, rgba(8, 8, 18, 0.2) 58%, rgba(4, 5, 11, 0.7) 100%),
+        linear-gradient(180deg, rgba(7, 7, 15, 0.34), rgba(7, 7, 15, 0.28) 32%, rgba(4, 5, 11, 0.56));
+      pointer-events: none;
+    }
+
+    .tone {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 50% 72%, rgba(255, 235, 210, 0.05), transparent 22%),
+        radial-gradient(circle at 22% 24%, rgba(110, 92, 164, 0.17), transparent 36%),
+        radial-gradient(circle at 82% 30%, rgba(63, 89, 158, 0.18), transparent 34%),
+        linear-gradient(180deg, rgba(10, 12, 25, 0.36), rgba(8, 9, 18, 0.6) 52%, rgba(8, 9, 18, 0.82));
+      mix-blend-mode: screen;
       pointer-events: none;
     }
 
@@ -181,10 +212,15 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
+      .bg-video,
       .mist,
       .content,
       .hint {
         animation: none !important;
+      }
+
+      .bg-video {
+        transform: scale(1.08);
       }
 
       .content {
@@ -215,7 +251,22 @@
   </style>
 </head>
 <body>
+  <div class="video-wrap" aria-hidden="true">
+    <video
+      class="bg-video"
+      id="bgVideo"
+      autoplay
+      muted
+      loop
+      playsinline
+      preload="auto"
+      poster="preview-frame.jpg"
+    >
+      <source src="lovely-performance-bg.mp4" type="video/mp4" />
+    </video>
+  </div>
   <canvas id="lights" aria-hidden="true"></canvas>
+  <div class="tone" aria-hidden="true"></div>
   <div class="mist" aria-hidden="true"></div>
   <div class="grain" aria-hidden="true"></div>
   <div class="vignette" aria-hidden="true"></div>
@@ -232,9 +283,28 @@
   <script>
     const RECIPIENT_NAME = '[FILL IN NAME]';
     const dedicationText = '“Lovely” — for you';
+    const video = document.getElementById('bgVideo');
+    const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 
     document.getElementById('recipientName').textContent = RECIPIENT_NAME;
     document.getElementById('dedication').textContent = dedicationText;
+
+    function syncReducedMotionPreference() {
+      if (reducedMotionQuery.matches) {
+        video.pause();
+        video.currentTime = 0;
+        video.removeAttribute('autoplay');
+      } else {
+        video.setAttribute('autoplay', 'autoplay');
+        const playPromise = video.play();
+        if (playPromise && typeof playPromise.catch === 'function') {
+          playPromise.catch(() => {});
+        }
+      }
+    }
+
+    syncReducedMotionPreference();
+    reducedMotionQuery.addEventListener('change', syncReducedMotionPreference);
 
     const canvas = document.getElementById('lights');
     const ctx = canvas.getContext('2d');
@@ -242,7 +312,7 @@
     let height = 0;
     let dpr = Math.min(window.devicePixelRatio || 1, 2);
     let blooms = [];
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reducedMotion = reducedMotionQuery.matches;
 
     function random(min, max) {
       return Math.random() * (max - min) + min;
