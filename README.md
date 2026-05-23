@@ -11,15 +11,17 @@ A single-file ambient backdrop site for a live piano performance of **"Lovely"**
 ## Features
 - Uses a soft, treated piano-performance video as a moving background texture
 - Smooth two-video crossfade loop so the restart feels clean instead of snapping
+- Muted autoplay with a small Unmute / Mute control for normal visitors
 - Slow ambient motion
 - Dark midnight blue / muted purple palette
 - Soft centered dedication text
+- Timed lyric overlay system with inline cue data ready to customize
 - Canvas-based drifting light blooms
 
 ## Usage
 Open `index.html` in a browser, then press `F11` for fullscreen.
 
-Most browsers will block **autoplay with sound** until there's a user gesture, so if the audio doesn't begin immediately, click once anywhere on the page.
+The page now autoplays **muted** by default. Use the on-screen **Unmute** button if you want sound during a normal browser visit.
 
 ### Autoplay launcher
 For a Chromium-based browser, use the included launcher instead:
@@ -38,4 +40,6 @@ The page expects these local companion files to sit beside `index.html`:
 Edit these values near the top of the inline script in `index.html`:
 - `RECIPIENT_NAME`
 - `dedicationText`
+- `DEDICATION_DELAY_MS`
+- `LYRIC_CUES` — array of `{ start, end, text }` entries for timed lyric overlays
 

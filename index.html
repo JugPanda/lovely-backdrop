@@ -164,6 +164,41 @@
       transform: translateY(0);
     }
 
+    .lyrics-wrap {
+      position: absolute;
+      left: 50%;
+      bottom: 11vh;
+      transform: translateX(-50%);
+      width: min(80vw, 900px);
+      display: flex;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 4;
+    }
+
+    .lyrics-line {
+      margin: 0;
+      min-height: 2.7em;
+      max-width: min(76vw, 760px);
+      text-align: center;
+      font-family: "Segoe UI", Inter, Helvetica, Arial, sans-serif;
+      font-size: clamp(1.05rem, 1.9vw, 1.6rem);
+      font-weight: 300;
+      line-height: 1.45;
+      letter-spacing: 0.03em;
+      color: rgba(243, 244, 255, 0.84);
+      text-shadow: 0 0 22px rgba(8, 10, 24, 0.3), 0 0 42px rgba(8, 10, 24, 0.18);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 600ms ease, transform 600ms ease;
+      white-space: pre-line;
+    }
+
+    .lyrics-line.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
     .line::before,
     .line::after {
       content: "";
@@ -295,6 +330,16 @@
         margin: 0 0.6rem;
       }
 
+      .lyrics-wrap {
+        width: min(88vw, 620px);
+        bottom: 90px;
+      }
+
+      .lyrics-line {
+        font-size: clamp(1rem, 4.4vw, 1.22rem);
+        min-height: 3.2em;
+      }
+
       .hint {
         display: none;
       }
@@ -349,6 +394,10 @@
     </div>
   </div>
 
+  <div class="lyrics-wrap" aria-live="polite" aria-atomic="true">
+    <p class="lyrics-line" id="lyricsLine"></p>
+  </div>
+
   <div class="hint">Autoplaying muted • use Unmute for sound</div>
   <button class="sound-toggle" id="soundToggle" type="button" aria-pressed="false" aria-label="Unmute audio">Unmute</button>
 
@@ -356,12 +405,21 @@
     const RECIPIENT_NAME = 'Favor';
     const dedicationText = '“Lovely” — Billie Ellish';
     const DEDICATION_DELAY_MS = 180000;
+    const LYRIC_CUES = [
+      // Add timed lyric cues here when you have approved text to use.
+      // Format: { start: 12.4, end: 16.8, text: 'Your lyric line' }
+      // Example placeholders below keep the display system wired up without embedding copyrighted full lyrics.
+      { start: 20, end: 28, text: '[Opening lyric line]' },
+      { start: 56, end: 64, text: '[Next lyric line]' },
+      { start: 116, end: 124, text: '[Late-song lyric line]' }
+    ];
     const videoA = document.getElementById('bgVideoA');
     const videoB = document.getElementById('bgVideoB');
     const videos = [videoA, videoB];
     const hint = document.querySelector('.hint');
     const soundToggle = document.getElementById('soundToggle');
     const dedicationEl = document.getElementById('dedication');
+    const lyricsLineEl = document.getElementById('lyricsLine');
     const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     const CROSSFADE_SECONDS = 2.4;
     const VIDEO_MAX_OPACITY = 0.62;
@@ -373,6 +431,7 @@
     let audioEnabled = false;
     let dedicationTimer = null;
     let dedicationShown = false;
+    let activeLyricIndex = -1;
 
     document.getElementById('recipientName').textContent = RECIPIENT_NAME;
     dedicationEl.textContent = dedicationText;
@@ -402,6 +461,39 @@
         videoEl.muted = !audioEnabled;
       });
       updateSoundUi();
+    }
+
+    function getPlaybackTime() {
+      if (!playbackStarted) return 0;
+      const activeTime = Number.isFinite(activeVideo.currentTime) ? activeVideo.currentTime : 0;
+      const standbyTime = Number.isFinite(standbyVideo.currentTime) ? standbyVideo.currentTime : 0;
+      return crossfadeRunning ? Math.max(activeTime, standbyTime) : activeTime;
+    }
+
+    function setLyricText(text) {
+      if (text) {
+        lyricsLineEl.textContent = text;
+        lyricsLineEl.classList.add('visible');
+      } else {
+        lyricsLineEl.classList.remove('visible');
+        lyricsLineEl.textContent = '';
+      }
+    }
+
+    function updateLyrics() {
+      if (!LYRIC_CUES.length || !playbackStarted) {
+        if (activeLyricIndex !== -1) {
+          activeLyricIndex = -1;
+          setLyricText('');
+        }
+        return;
+      }
+
+      const now = getPlaybackTime();
+      const nextIndex = LYRIC_CUES.findIndex((cue) => now >= cue.start && now < cue.end);
+      if (nextIndex === activeLyricIndex) return;
+      activeLyricIndex = nextIndex;
+      setLyricText(nextIndex === -1 ? '' : LYRIC_CUES[nextIndex].text);
     }
 
     function setLayerOpacity(videoEl, alpha) {
@@ -481,6 +573,8 @@
     function monitorLoop() {
       if (!playbackStarted || reducedMotionQuery.matches) return;
 
+      updateLyrics();
+
       if (
         !crossfadeRunning &&
         Number.isFinite(activeVideo.duration) &&
@@ -514,6 +608,8 @@
         stopLoopMonitor();
         crossfadeRunning = false;
         playbackStarted = false;
+        activeLyricIndex = -1;
+        setLyricText('');
         activeVideo = videoA;
         standbyVideo = videoB;
         resetVideoState(videoA, { volume: 0, opacity: 1, pause: true });
