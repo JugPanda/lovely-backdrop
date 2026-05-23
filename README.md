@@ -21,6 +21,15 @@ Open `index.html` in a browser, then press `F11` for fullscreen.
 
 Most browsers will block **autoplay with sound** until there's a user gesture, so if the audio doesn't begin immediately, click once anywhere on the page.
 
+### Autoplay launcher
+For a Chromium-based browser, use the included launcher instead:
+
+```bash
+./start-lovely.sh
+```
+
+That opens the local page fullscreen with Chromium's autoplay restriction disabled so the song can begin immediately.
+
 The page expects these local companion files to sit beside `index.html`:
 - `lovely-performance-bg.mp4`
 - `preview-frame.jpg`
