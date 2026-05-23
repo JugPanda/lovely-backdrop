@@ -195,6 +195,42 @@
       color: rgba(230, 233, 247, 0.58);
     }
 
+    .sound-toggle {
+      position: absolute;
+      left: 18px;
+      bottom: 14px;
+      z-index: 5;
+      padding: 0.7rem 1rem;
+      border-radius: 999px;
+      border: 1px solid rgba(226, 229, 248, 0.18);
+      background: rgba(13, 15, 29, 0.36);
+      color: rgba(238, 240, 252, 0.82);
+      font-family: "Segoe UI", Inter, Helvetica, Arial, sans-serif;
+      font-size: 0.76rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+      transition: background 180ms ease, border-color 180ms ease, color 180ms ease, transform 180ms ease;
+    }
+
+    .sound-toggle:hover,
+    .sound-toggle:focus-visible {
+      outline: none;
+      transform: translateY(-1px);
+      background: rgba(17, 20, 38, 0.5);
+      border-color: rgba(232, 235, 251, 0.3);
+      color: rgba(245, 246, 255, 0.95);
+    }
+
+    .sound-toggle.is-live {
+      background: rgba(33, 38, 68, 0.5);
+      border-color: rgba(204, 210, 243, 0.34);
+      color: rgba(246, 247, 255, 0.96);
+    }
+
     @keyframes breathe {
       0% {
         transform: scale(1) translate3d(0, 0, 0);
@@ -262,6 +298,18 @@
       .hint {
         display: none;
       }
+
+      .sound-toggle {
+        left: 50%;
+        bottom: 18px;
+        transform: translateX(-50%);
+        min-width: 150px;
+      }
+
+      .sound-toggle:hover,
+      .sound-toggle:focus-visible {
+        transform: translateX(-50%) translateY(-1px);
+      }
     }
   </style>
 </head>
@@ -301,7 +349,8 @@
     </div>
   </div>
 
-  <div class="hint">Press F11 for fullscreen</div>
+  <div class="hint">Autoplaying muted • use Unmute for sound</div>
+  <button class="sound-toggle" id="soundToggle" type="button" aria-pressed="false" aria-label="Unmute audio">Unmute</button>
 
   <script>
     const RECIPIENT_NAME = 'Favor';
@@ -311,6 +360,7 @@
     const videoB = document.getElementById('bgVideoB');
     const videos = [videoA, videoB];
     const hint = document.querySelector('.hint');
+    const soundToggle = document.getElementById('soundToggle');
     const dedicationEl = document.getElementById('dedication');
     const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     const CROSSFADE_SECONDS = 2.4;
@@ -320,6 +370,7 @@
     let monitorHandle = null;
     let crossfadeRunning = false;
     let playbackStarted = false;
+    let audioEnabled = false;
     let dedicationTimer = null;
     let dedicationShown = false;
 
@@ -339,6 +390,20 @@
       dedicationTimer = window.setTimeout(revealDedication, DEDICATION_DELAY_MS);
     }
 
+    function updateSoundUi() {
+      soundToggle.textContent = audioEnabled ? 'Mute' : 'Unmute';
+      soundToggle.setAttribute('aria-pressed', String(audioEnabled));
+      soundToggle.setAttribute('aria-label', audioEnabled ? 'Mute audio' : 'Unmute audio');
+      soundToggle.classList.toggle('is-live', audioEnabled);
+    }
+
+    function applyAudioState() {
+      videos.forEach((videoEl) => {
+        videoEl.muted = !audioEnabled;
+      });
+      updateSoundUi();
+    }
+
     function setLayerOpacity(videoEl, alpha) {
       videoEl.style.setProperty('--video-opacity', String(VIDEO_MAX_OPACITY * alpha));
     }
@@ -348,18 +413,19 @@
         videoEl.pause();
       }
       videoEl.currentTime = 0;
-      videoEl.muted = false;
+      videoEl.muted = !audioEnabled;
       videoEl.volume = volume;
       setLayerOpacity(videoEl, opacity);
     }
 
     videos.forEach((videoEl, index) => {
       videoEl.loop = false;
-      videoEl.muted = false;
+      videoEl.muted = !audioEnabled;
       videoEl.volume = index === 0 ? 1 : 0;
       setLayerOpacity(videoEl, index === 0 ? 1 : 0);
     });
 
+    applyAudioState();
     resetVideoState(videoB);
 
     function stopLoopMonitor() {
@@ -380,7 +446,7 @@
       } catch (error) {
         crossfadeRunning = false;
         hint.classList.add('needs-start');
-        hint.textContent = 'Click anywhere to begin the song • Press F11 for fullscreen';
+        hint.textContent = 'Tap anywhere to begin the video • use Unmute for sound';
         return;
       }
 
@@ -434,11 +500,11 @@
         stopLoopMonitor();
         monitorLoop();
         hint.classList.remove('needs-start');
-        hint.textContent = 'Press F11 for fullscreen';
+        hint.textContent = audioEnabled ? 'Press F11 for fullscreen' : 'Autoplaying muted • use Unmute for sound';
         return true;
       } catch (error) {
         hint.classList.add('needs-start');
-        hint.textContent = 'Click anywhere to begin the song • Press F11 for fullscreen';
+        hint.textContent = 'Tap anywhere to begin the video • use Unmute for sound';
         return false;
       }
     }
@@ -455,18 +521,30 @@
         videoA.removeAttribute('autoplay');
         videoB.removeAttribute('autoplay');
         hint.classList.remove('needs-start');
-        hint.textContent = 'Press F11 for fullscreen';
+        hint.textContent = 'Autoplay paused for reduced motion';
       } else {
         videoA.setAttribute('autoplay', 'autoplay');
         videoB.setAttribute('autoplay', 'autoplay');
         resetVideoState(activeVideo, { volume: 1, opacity: 1, pause: false });
         resetVideoState(standbyVideo, { volume: 0, opacity: 0, pause: true });
+        applyAudioState();
         attemptPlayback();
       }
     }
 
     syncReducedMotionPreference();
     reducedMotionQuery.addEventListener('change', syncReducedMotionPreference);
+
+    soundToggle.addEventListener('click', async (event) => {
+      event.stopPropagation();
+      audioEnabled = !audioEnabled;
+      applyAudioState();
+      if (!reducedMotionQuery.matches && !playbackStarted) {
+        await attemptPlayback();
+      } else if (!hint.classList.contains('needs-start')) {
+        hint.textContent = audioEnabled ? 'Press F11 for fullscreen' : 'Autoplaying muted • use Unmute for sound';
+      }
+    });
 
     document.addEventListener('pointerdown', () => {
       if (!reducedMotionQuery.matches && (activeVideo.paused || hint.classList.contains('needs-start'))) {
