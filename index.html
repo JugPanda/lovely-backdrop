@@ -405,6 +405,7 @@
     const RECIPIENT_NAME = 'Favor';
     const dedicationText = '“Lovely” — Billie Ellish';
     const DEDICATION_DELAY_MS = 180000;
+    const LYRICS_ENABLED = false;
     const LYRIC_CUES = [
       // Add timed lyric cues here when you have approved text to use.
       // Format: { start: 12.4, end: 16.8, text: 'Your lyric line' }
@@ -435,6 +436,9 @@
 
     document.getElementById('recipientName').textContent = RECIPIENT_NAME;
     dedicationEl.textContent = dedicationText;
+    if (!LYRICS_ENABLED) {
+      lyricsLineEl.parentElement.style.display = 'none';
+    }
 
     function revealDedication() {
       dedicationShown = true;
@@ -471,6 +475,12 @@
     }
 
     function setLyricText(text) {
+      if (!LYRICS_ENABLED) {
+        lyricsLineEl.classList.remove('visible');
+        lyricsLineEl.textContent = '';
+        return;
+      }
+
       if (text) {
         lyricsLineEl.textContent = text;
         lyricsLineEl.classList.add('visible');
@@ -481,7 +491,7 @@
     }
 
     function updateLyrics() {
-      if (!LYRIC_CUES.length || !playbackStarted) {
+      if (!LYRICS_ENABLED || !LYRIC_CUES.length || !playbackStarted) {
         if (activeLyricIndex !== -1) {
           activeLyricIndex = -1;
           setLyricText('');
