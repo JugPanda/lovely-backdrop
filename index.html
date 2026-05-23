@@ -60,9 +60,9 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      transform: scale(1.1);
-      filter: blur(14px) saturate(0.42) brightness(0.42) contrast(0.94) sepia(0.08) hue-rotate(202deg);
-      opacity: 0.34;
+      transform: scale(1.06);
+      filter: blur(8px) saturate(0.5) brightness(0.56) contrast(0.98) sepia(0.06) hue-rotate(198deg);
+      opacity: 0.5;
       mix-blend-mode: screen;
     }
 
@@ -71,7 +71,7 @@
       height: 100%;
       display: block;
       filter: blur(0.2px);
-      opacity: 0.68;
+      opacity: 0.4;
     }
 
     .mist {
@@ -81,7 +81,7 @@
         radial-gradient(42vw 32vw at 54% 18%, rgba(180, 137, 156, 0.08), transparent 72%);
       mix-blend-mode: screen;
       filter: blur(42px);
-      opacity: 0.58;
+      opacity: 0.42;
       animation: breathe 18s ease-in-out infinite alternate;
       transform-origin: center;
     }
@@ -180,6 +180,12 @@
       user-select: none;
     }
 
+    .hint.needs-start {
+      opacity: 1;
+      animation: none;
+      color: rgba(230, 233, 247, 0.58);
+    }
+
     @keyframes breathe {
       0% {
         transform: scale(1) translate3d(0, 0, 0);
@@ -256,7 +262,6 @@
       class="bg-video"
       id="bgVideo"
       autoplay
-      muted
       loop
       playsinline
       preload="auto"
@@ -284,27 +289,49 @@
     const RECIPIENT_NAME = 'Favor';
     const dedicationText = '“Lovely” — for you';
     const video = document.getElementById('bgVideo');
+    const hint = document.querySelector('.hint');
     const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 
     document.getElementById('recipientName').textContent = RECIPIENT_NAME;
     document.getElementById('dedication').textContent = dedicationText;
+
+    video.muted = false;
+    video.volume = 1;
+
+    async function attemptPlayback() {
+      try {
+        await video.play();
+        hint.classList.remove('needs-start');
+        hint.textContent = 'Press F11 for fullscreen';
+        return true;
+      } catch (error) {
+        hint.classList.add('needs-start');
+        hint.textContent = 'Click anywhere to begin the song • Press F11 for fullscreen';
+        return false;
+      }
+    }
 
     function syncReducedMotionPreference() {
       if (reducedMotionQuery.matches) {
         video.pause();
         video.currentTime = 0;
         video.removeAttribute('autoplay');
+        hint.classList.remove('needs-start');
+        hint.textContent = 'Press F11 for fullscreen';
       } else {
         video.setAttribute('autoplay', 'autoplay');
-        const playPromise = video.play();
-        if (playPromise && typeof playPromise.catch === 'function') {
-          playPromise.catch(() => {});
-        }
+        attemptPlayback();
       }
     }
 
     syncReducedMotionPreference();
     reducedMotionQuery.addEventListener('change', syncReducedMotionPreference);
+
+    document.addEventListener('pointerdown', () => {
+      if (!reducedMotionQuery.matches && (video.paused || hint.classList.contains('needs-start'))) {
+        attemptPlayback();
+      }
+    }, { passive: true });
 
     const canvas = document.getElementById('lights');
     const ctx = canvas.getContext('2d');
