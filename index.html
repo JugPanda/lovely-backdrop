@@ -62,8 +62,9 @@
       object-fit: cover;
       transform: scale(1.06);
       filter: blur(8px) saturate(0.5) brightness(0.56) contrast(0.98) sepia(0.06) hue-rotate(198deg);
-      opacity: 0.5;
+      opacity: var(--video-opacity, 0);
       mix-blend-mode: screen;
+      transition: opacity 120ms linear;
     }
 
     #lights {
@@ -260,9 +261,18 @@
   <div class="video-wrap" aria-hidden="true">
     <video
       class="bg-video"
-      id="bgVideo"
+      id="bgVideoA"
       autoplay
-      loop
+      playsinline
+      preload="auto"
+      poster="preview-frame.jpg"
+    >
+      <source src="lovely-performance-bg.mp4" type="video/mp4" />
+    </video>
+    <video
+      class="bg-video"
+      id="bgVideoB"
+      autoplay
       playsinline
       preload="auto"
       poster="preview-frame.jpg"
@@ -288,19 +298,115 @@
   <script>
     const RECIPIENT_NAME = 'Favor';
     const dedicationText = '“Lovely” — Billie Ellish';
-    const video = document.getElementById('bgVideo');
+    const videoA = document.getElementById('bgVideoA');
+    const videoB = document.getElementById('bgVideoB');
+    const videos = [videoA, videoB];
     const hint = document.querySelector('.hint');
     const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const CROSSFADE_SECONDS = 2.4;
+    const VIDEO_MAX_OPACITY = 0.5;
+    let activeVideo = videoA;
+    let standbyVideo = videoB;
+    let monitorHandle = null;
+    let crossfadeRunning = false;
+    let playbackStarted = false;
 
     document.getElementById('recipientName').textContent = RECIPIENT_NAME;
     document.getElementById('dedication').textContent = dedicationText;
 
-    video.muted = false;
-    video.volume = 1;
+    function setLayerOpacity(videoEl, alpha) {
+      videoEl.style.setProperty('--video-opacity', String(VIDEO_MAX_OPACITY * alpha));
+    }
+
+    function resetVideoState(videoEl, { volume = 0, opacity = 0, pause = true } = {}) {
+      if (pause) {
+        videoEl.pause();
+      }
+      videoEl.currentTime = 0;
+      videoEl.muted = false;
+      videoEl.volume = volume;
+      setLayerOpacity(videoEl, opacity);
+    }
+
+    videos.forEach((videoEl, index) => {
+      videoEl.loop = false;
+      videoEl.muted = false;
+      videoEl.volume = index === 0 ? 1 : 0;
+      setLayerOpacity(videoEl, index === 0 ? 1 : 0);
+    });
+
+    resetVideoState(videoB);
+
+    function stopLoopMonitor() {
+      if (monitorHandle) {
+        cancelAnimationFrame(monitorHandle);
+        monitorHandle = null;
+      }
+    }
+
+    async function beginCrossfade() {
+      if (crossfadeRunning || reducedMotionQuery.matches) return;
+      crossfadeRunning = true;
+
+      resetVideoState(standbyVideo, { volume: 0, opacity: 0, pause: false });
+
+      try {
+        await standbyVideo.play();
+      } catch (error) {
+        crossfadeRunning = false;
+        hint.classList.add('needs-start');
+        hint.textContent = 'Click anywhere to begin the song • Press F11 for fullscreen';
+        return;
+      }
+
+      const startedAt = performance.now();
+
+      function step(now) {
+        const progress = Math.min((now - startedAt) / (CROSSFADE_SECONDS * 1000), 1);
+        activeVideo.volume = 1 - progress;
+        standbyVideo.volume = progress;
+        setLayerOpacity(activeVideo, 1 - progress);
+        setLayerOpacity(standbyVideo, progress);
+
+        if (progress < 1) {
+          requestAnimationFrame(step);
+          return;
+        }
+
+        activeVideo.pause();
+        activeVideo.currentTime = 0;
+        activeVideo.volume = 0;
+        setLayerOpacity(activeVideo, 0);
+
+        const previousActive = activeVideo;
+        activeVideo = standbyVideo;
+        standbyVideo = previousActive;
+        crossfadeRunning = false;
+      }
+
+      requestAnimationFrame(step);
+    }
+
+    function monitorLoop() {
+      if (!playbackStarted || reducedMotionQuery.matches) return;
+
+      if (
+        !crossfadeRunning &&
+        Number.isFinite(activeVideo.duration) &&
+        activeVideo.duration - activeVideo.currentTime <= CROSSFADE_SECONDS + 0.08
+      ) {
+        beginCrossfade();
+      }
+
+      monitorHandle = requestAnimationFrame(monitorLoop);
+    }
 
     async function attemptPlayback() {
       try {
-        await video.play();
+        await activeVideo.play();
+        playbackStarted = true;
+        stopLoopMonitor();
+        monitorLoop();
         hint.classList.remove('needs-start');
         hint.textContent = 'Press F11 for fullscreen';
         return true;
@@ -313,13 +419,22 @@
 
     function syncReducedMotionPreference() {
       if (reducedMotionQuery.matches) {
-        video.pause();
-        video.currentTime = 0;
-        video.removeAttribute('autoplay');
+        stopLoopMonitor();
+        crossfadeRunning = false;
+        playbackStarted = false;
+        activeVideo = videoA;
+        standbyVideo = videoB;
+        resetVideoState(videoA, { volume: 0, opacity: 1, pause: true });
+        resetVideoState(videoB, { volume: 0, opacity: 0, pause: true });
+        videoA.removeAttribute('autoplay');
+        videoB.removeAttribute('autoplay');
         hint.classList.remove('needs-start');
         hint.textContent = 'Press F11 for fullscreen';
       } else {
-        video.setAttribute('autoplay', 'autoplay');
+        videoA.setAttribute('autoplay', 'autoplay');
+        videoB.setAttribute('autoplay', 'autoplay');
+        resetVideoState(activeVideo, { volume: 1, opacity: 1, pause: false });
+        resetVideoState(standbyVideo, { volume: 0, opacity: 0, pause: true });
         attemptPlayback();
       }
     }
@@ -328,7 +443,7 @@
     reducedMotionQuery.addEventListener('change', syncReducedMotionPreference);
 
     document.addEventListener('pointerdown', () => {
-      if (!reducedMotionQuery.matches && (video.paused || hint.classList.contains('needs-start'))) {
+      if (!reducedMotionQuery.matches && (activeVideo.paused || hint.classList.contains('needs-start'))) {
         attemptPlayback();
       }
     }, { passive: true });

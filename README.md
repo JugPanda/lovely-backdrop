@@ -9,7 +9,8 @@ A single-file ambient backdrop site for a live piano performance of **"Lovely"**
 - Designed to open directly in a browser and run fullscreen
 
 ## Features
-- Uses a soft, heavily treated piano-performance video as a moving background texture
+- Uses a soft, treated piano-performance video as a moving background texture
+- Smooth two-video crossfade loop so the restart feels clean instead of snapping
 - Slow ambient motion
 - Dark midnight blue / muted purple palette
 - Soft centered dedication text
@@ -17,6 +18,8 @@ A single-file ambient backdrop site for a live piano performance of **"Lovely"**
 
 ## Usage
 Open `index.html` in a browser, then press `F11` for fullscreen.
+
+Most browsers will block **autoplay with sound** until there's a user gesture, so if the audio doesn't begin immediately, click once anywhere on the page.
 
 The page expects these local companion files to sit beside `index.html`:
 - `lovely-performance-bg.mp4`
