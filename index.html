@@ -60,8 +60,8 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      transform: scale(1.06);
-      filter: blur(8px) saturate(0.5) brightness(0.56) contrast(0.98) sepia(0.06) hue-rotate(198deg);
+      transform: scale(1.04);
+      filter: blur(4px) saturate(0.62) brightness(0.68) contrast(1.02) sepia(0.04) hue-rotate(194deg);
       opacity: var(--video-opacity, 0);
       mix-blend-mode: screen;
       transition: opacity 120ms linear;
@@ -71,18 +71,18 @@
       width: 100%;
       height: 100%;
       display: block;
-      filter: blur(0.2px);
-      opacity: 0.4;
+      filter: blur(0.15px);
+      opacity: 0.26;
     }
 
     .mist {
       background:
-        radial-gradient(40vw 30vw at 18% 48%, rgba(120, 104, 173, 0.11), transparent 70%),
-        radial-gradient(34vw 28vw at 76% 60%, rgba(82, 102, 167, 0.11), transparent 72%),
-        radial-gradient(42vw 32vw at 54% 18%, rgba(180, 137, 156, 0.08), transparent 72%);
+        radial-gradient(40vw 30vw at 18% 48%, rgba(120, 104, 173, 0.08), transparent 70%),
+        radial-gradient(34vw 28vw at 76% 60%, rgba(82, 102, 167, 0.08), transparent 72%),
+        radial-gradient(42vw 32vw at 54% 18%, rgba(180, 137, 156, 0.06), transparent 72%);
       mix-blend-mode: screen;
-      filter: blur(42px);
-      opacity: 0.42;
+      filter: blur(34px);
+      opacity: 0.28;
       animation: breathe 18s ease-in-out infinite alternate;
       transform-origin: center;
     }
@@ -99,8 +99,8 @@
 
     .vignette {
       background:
-        radial-gradient(circle at center, transparent 0 34%, rgba(8, 8, 18, 0.2) 58%, rgba(4, 5, 11, 0.7) 100%),
-        linear-gradient(180deg, rgba(7, 7, 15, 0.34), rgba(7, 7, 15, 0.28) 32%, rgba(4, 5, 11, 0.56));
+        radial-gradient(circle at center, transparent 0 38%, rgba(8, 8, 18, 0.15) 60%, rgba(4, 5, 11, 0.58) 100%),
+        linear-gradient(180deg, rgba(7, 7, 15, 0.24), rgba(7, 7, 15, 0.22) 32%, rgba(4, 5, 11, 0.44));
       pointer-events: none;
     }
 
@@ -108,10 +108,10 @@
       position: absolute;
       inset: 0;
       background:
-        radial-gradient(circle at 50% 72%, rgba(255, 235, 210, 0.05), transparent 22%),
-        radial-gradient(circle at 22% 24%, rgba(110, 92, 164, 0.17), transparent 36%),
-        radial-gradient(circle at 82% 30%, rgba(63, 89, 158, 0.18), transparent 34%),
-        linear-gradient(180deg, rgba(10, 12, 25, 0.36), rgba(8, 9, 18, 0.6) 52%, rgba(8, 9, 18, 0.82));
+        radial-gradient(circle at 50% 72%, rgba(255, 235, 210, 0.04), transparent 22%),
+        radial-gradient(circle at 22% 24%, rgba(110, 92, 164, 0.12), transparent 36%),
+        radial-gradient(circle at 82% 30%, rgba(63, 89, 158, 0.13), transparent 34%),
+        linear-gradient(180deg, rgba(10, 12, 25, 0.24), rgba(8, 9, 18, 0.42) 52%, rgba(8, 9, 18, 0.62));
       mix-blend-mode: screen;
       pointer-events: none;
     }
@@ -304,7 +304,7 @@
     const hint = document.querySelector('.hint');
     const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     const CROSSFADE_SECONDS = 2.4;
-    const VIDEO_MAX_OPACITY = 0.5;
+    const VIDEO_MAX_OPACITY = 0.62;
     let activeVideo = videoA;
     let standbyVideo = videoB;
     let monitorHandle = null;
