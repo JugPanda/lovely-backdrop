@@ -60,8 +60,9 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      transform: scale(1.04);
-      filter: blur(4px) saturate(0.62) brightness(0.68) contrast(1.02) sepia(0.04) hue-rotate(194deg);
+      object-position: 50% 52%;
+      transform: scale(1.03);
+      filter: blur(2.8px) saturate(0.7) brightness(0.73) contrast(1.05) sepia(0.03) hue-rotate(194deg);
       opacity: var(--video-opacity, 0);
       mix-blend-mode: screen;
       transition: opacity 120ms linear;
@@ -77,12 +78,12 @@
 
     .mist {
       background:
-        radial-gradient(40vw 30vw at 18% 48%, rgba(120, 104, 173, 0.08), transparent 70%),
-        radial-gradient(34vw 28vw at 76% 60%, rgba(82, 102, 167, 0.08), transparent 72%),
-        radial-gradient(42vw 32vw at 54% 18%, rgba(180, 137, 156, 0.06), transparent 72%);
+        radial-gradient(40vw 30vw at 18% 48%, rgba(120, 104, 173, 0.07), transparent 70%),
+        radial-gradient(34vw 28vw at 76% 60%, rgba(82, 102, 167, 0.07), transparent 72%),
+        radial-gradient(42vw 32vw at 54% 18%, rgba(180, 137, 156, 0.05), transparent 72%);
       mix-blend-mode: screen;
-      filter: blur(34px);
-      opacity: 0.28;
+      filter: blur(30px);
+      opacity: 0.24;
       animation: breathe 18s ease-in-out infinite alternate;
       transform-origin: center;
     }
@@ -99,8 +100,8 @@
 
     .vignette {
       background:
-        radial-gradient(circle at center, transparent 0 38%, rgba(8, 8, 18, 0.15) 60%, rgba(4, 5, 11, 0.58) 100%),
-        linear-gradient(180deg, rgba(7, 7, 15, 0.24), rgba(7, 7, 15, 0.22) 32%, rgba(4, 5, 11, 0.44));
+        radial-gradient(circle at center, transparent 0 40%, rgba(8, 8, 18, 0.13) 61%, rgba(4, 5, 11, 0.5) 100%),
+        linear-gradient(180deg, rgba(7, 7, 15, 0.2), rgba(7, 7, 15, 0.18) 32%, rgba(4, 5, 11, 0.38));
       pointer-events: none;
     }
 
@@ -108,10 +109,10 @@
       position: absolute;
       inset: 0;
       background:
-        radial-gradient(circle at 50% 72%, rgba(255, 235, 210, 0.04), transparent 22%),
-        radial-gradient(circle at 22% 24%, rgba(110, 92, 164, 0.12), transparent 36%),
-        radial-gradient(circle at 82% 30%, rgba(63, 89, 158, 0.13), transparent 34%),
-        linear-gradient(180deg, rgba(10, 12, 25, 0.24), rgba(8, 9, 18, 0.42) 52%, rgba(8, 9, 18, 0.62));
+        radial-gradient(circle at 50% 72%, rgba(255, 235, 210, 0.035), transparent 22%),
+        radial-gradient(circle at 22% 24%, rgba(110, 92, 164, 0.1), transparent 36%),
+        radial-gradient(circle at 82% 30%, rgba(63, 89, 158, 0.11), transparent 34%),
+        linear-gradient(180deg, rgba(10, 12, 25, 0.18), rgba(8, 9, 18, 0.34) 52%, rgba(8, 9, 18, 0.54));
       mix-blend-mode: screen;
       pointer-events: none;
     }
@@ -316,18 +317,30 @@
     }
 
     @media (max-width: 640px) {
+      .content-wrap {
+        padding: 8vh 8vw 18vh;
+        place-items: center;
+      }
+
       .content {
         gap: 0.75rem;
+        max-width: 86vw;
+      }
+
+      .name {
+        font-size: clamp(2.05rem, 10vw, 3.15rem);
+        letter-spacing: 0.13em;
       }
 
       .line {
-        letter-spacing: 0.18em;
+        font-size: clamp(0.74rem, 3.25vw, 0.92rem);
+        letter-spacing: 0.16em;
       }
 
       .line::before,
       .line::after {
-        width: 42px;
-        margin: 0 0.6rem;
+        width: 34px;
+        margin: 0 0.42rem;
       }
 
       .lyrics-wrap {
@@ -346,7 +359,7 @@
 
       .sound-toggle {
         left: 50%;
-        bottom: 18px;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 18px);
         transform: translateX(-50%);
         min-width: 150px;
       }
@@ -354,6 +367,21 @@
       .sound-toggle:hover,
       .sound-toggle:focus-visible {
         transform: translateX(-50%) translateY(-1px);
+      }
+
+      .bg-video {
+        object-position: 54% 55%;
+        transform: scale(1.01);
+      }
+    }
+
+    @media (max-width: 640px) and (max-height: 760px) {
+      .content-wrap {
+        padding-bottom: 19vh;
+      }
+
+      .name {
+        font-size: clamp(1.9rem, 9vw, 2.7rem);
       }
     }
   </style>
@@ -423,7 +451,7 @@
     const lyricsLineEl = document.getElementById('lyricsLine');
     const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     const CROSSFADE_SECONDS = 2.4;
-    const VIDEO_MAX_OPACITY = 0.62;
+    const VIDEO_MAX_OPACITY = 0.68;
     let activeVideo = videoA;
     let standbyVideo = videoB;
     let monitorHandle = null;
